@@ -1,12 +1,8 @@
 {
   "users": {
     "Dustin": {
-      "color": "#4DB37E"
+      "color": "#6DB56D"
     }
   },
-  "days": {
-    "2026-03-16": [
-      "Dustin"
-    ]
-  }
+  "days": {}
 }
