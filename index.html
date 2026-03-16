@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Homeoffice Planer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:         #EDE8DF;
+      --surface:    #F9F6F0;
+      --surface2:   #F2EDE4;
+      --border:     #D8D0C4;
+      --text:       #251E14;
+      --text-muted: #8A8070;
+      --accent:     #C17D3C;
+      --shadow-sm:  0 1px 4px rgba(0,0,0,0.06);
+      --shadow-md:  0 4px 28px rgba(0,0,0,0.11);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      background-image:
+        radial-gradient(circle at 15% 60%, rgba(193,125,60,0.07) 0%, transparent 50%),
+        radial-gradient(circle at 85% 15%, rgba(193,125,60,0.05) 0%, transparent 45%);
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1rem 5rem;
+    }
+
+    /* ── Header ── */
+    header {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2.5rem;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.85rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      line-height: 1;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.4rem 1rem 0.4rem 0.6rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+      user-select: none;
+    }
+    .user-badge:hover { box-shadow: var(--shadow-sm); }
+
+    .user-dot {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Month Navigation ── */
+    .cal-nav {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .cal-nav h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+
+    .nav-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover { background: var(--surface2); color: var(--text); }
+
+    /* ── Calendar Shell ── */
+    .calendar-wrap {
+      width: 100%;
+      max-width: 700px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    /* Weekday header */
+    .weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+    .weekday {
+      text-align: center;
+      padding: 0.7rem 0;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .weekday.weekend { color: #C4B9AC; }
+
+    /* Day grid */
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: var(--border);
+    }
+
+    /* ── Day Cell ── */
+    .day {
+      background: var(--surface);
+      aspect-ratio: 1;
+      min-height: 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .day:hover { background: var(--surface2); }
+
+    .day.empty {
+      background: #F4EFE6;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    /* Day number */
+    .day-num {
+      font-size: 0.9rem;
+      font-weight: 400;
+      position: relative;
+      z-index: 1;
+      line-height: 1;
+    }
+    .day.weekend .day-num { color: var(--text-muted); }
+
+    /* Today ring */
+    .day.today .day-num {
+      background: var(--text);
+      color: var(--surface);
+      width: 27px; height: 27px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    /* ── HO Background Highlight ── */
+    .day::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 9px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    /* Single user HO */
+    .day.ho-single::before {
+      background: var(--ho-color, #ccc);
+      opacity: 0.22;
+    }
+
+    /* Both users HO — diagonal split */
+    .day.ho-both::before {
+      background: linear-gradient(
+        135deg,
+        var(--color-a, #ccc) 50%,
+        var(--color-b, #aaa) 50%
+      );
+      opacity: 0.30;
+    }
+
+    /* Dots at bottom of cell */
+    .day-dots {
+      position: absolute;
+      bottom: 7px;
+      display: flex;
+      gap: 3px;
+      z-index: 1;
+    }
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+
+    /* ── Loading Bar ── */
+    .loading-bar {
+      width: 100%;
+      max-width: 700px;
+      height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 0.75rem;
+      overflow: hidden;
+      transition: opacity 0.3s;
+    }
+    .loading-bar.hidden { opacity: 0; pointer-events: none; }
+    .loading-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      animation: loadAnim 1.1s ease-in-out infinite alternate;
+    }
+    @keyframes loadAnim {
+      from { width: 20%; margin-left: 0; }
+      to   { width: 35%; margin-left: 65%; }
+    }
+
+    /* ── Legend ── */
+    .legend {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      gap: 1.25rem;
+      margin-top: 1.1rem;
+      flex-wrap: wrap;
+      min-height: 22px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .legend-swatch {
+      width: 13px; height: 13px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 2.2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--text);
+      color: var(--surface);
+      padding: 0.55rem 1.3rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 200;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(37,30,20,0.52);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+    .modal-overlay.hidden { display: none; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 22px;
+      padding: 2.5rem 2.25rem;
+      max-width: 370px;
+      width: 100%;
+      box-shadow: var(--shadow-md);
+      animation: modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.92) translateY(12px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.7rem;
+      font-weight: 500;
+      margin-bottom: 0.35rem;
+    }
+    .modal .subtitle {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin-bottom: 1.75rem;
+    }
+    .modal .field-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .modal input[type="text"] {
+      width: 100%;
+      padding: 0.72rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 11px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      background: var(--bg);
+      color: var(--text);
+      margin-bottom: 1.6rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .modal input[type="text"]:focus { border-color: var(--accent); }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.6rem;
+      margin-bottom: 2rem;
+    }
+    .color-swatch {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: transform 0.15s, border-color 0.15s;
+      outline: none;
+    }
+    .color-swatch:hover { transform: scale(1.12); }
+    .color-swatch.selected {
+      border-color: var(--text);
+      transform: scale(1.15);
+    }
+
+    .modal-btn {
+      width: 100%;
+      padding: 0.88rem;
+      background: var(--text);
+      color: var(--surface);
+      border: none;
+      border-radius: 11px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      letter-spacing: 0.01em;
+    }
+    .modal-btn:hover:not(:disabled) { opacity: 0.82; }
+    .modal-btn:disabled { opacity: 0.35; cursor: default; }
+
+    /* ── Mobile ── */
+    @media (max-width: 480px) {
+      h1 { font-size: 1.5rem; }
+      .day { min-height: 52px; }
+      .day-num { font-size: 0.8rem; }
+      .modal { padding: 2rem 1.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       SETUP MODAL
+  ══════════════════════════════════════ -->
+  <div id="setupModal" class="modal-overlay hidden">
+    <div class="modal">
+      <h2>Willkommen! 👋</h2>
+      <p class="subtitle">Richte dein Gerät einmalig ein – dauert 10 Sekunden.</p>
+      <label class="field-label" for="nameInput">Dein Name</label>
+      <input type="text" id="nameInput" placeholder="z.B. Anna" maxlength="20" autocomplete="off">
+      <label class="field-label">Deine Farbe</label>
+      <div class="color-grid" id="colorGrid"></div>
+      <button class="modal-btn" id="saveSetup" disabled>Loslegen →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       APP
+  ══════════════════════════════════════ -->
+  <header>
+    <h1>Home<em>office</em></h1>
+    <div class="user-badge" id="userBadge" title="Klicken zum Ändern">
+      <div class="user-dot" id="userDot"></div>
+      <span id="userName">–</span>
+    </div>
+  </header>
+
+  <div class="cal-nav">
+    <button class="nav-btn" id="prevMonth">&#8592;</button>
+    <h2 id="monthTitle"></h2>
+    <button class="nav-btn" id="nextMonth">&#8594;</button>
+  </div>
+
+  <div class="calendar-wrap">
+    <div class="weekdays" id="weekdays"></div>
+    <div class="days-grid" id="daysGrid"></div>
+  </div>
+
+  <div class="loading-bar hidden" id="loadingBar">
+    <div class="loading-bar-fill"></div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- ══════════════════════════════════════
+       SCRIPT
+  ══════════════════════════════════════ -->
+  <script>
+    // ╔══════════════════════════════════╗
+    // ║  K O N F I G U R A T I O N      ║
+    // ╚══════════════════════════════════╝
+    const GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN';
+    const GITHUB_REPO  = 'YOUR_USERNAME/YOUR_REPO_NAME';
+    const GITHUB_FILE  = 'homeoffice-data.json';
+    // ════════════════════════════════════
+
+    const COLORS = [
+      '#5B8DEF', '#E8834F', '#4DB37E', '#E05B7B',
+      '#A066D3', '#D4A820', '#4BBEC4', '#D4614E',
+      '#6DB56D', '#9B7FD4'
+    ];
+
+    const WEEKDAYS_LABEL = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    const MONTHS_LABEL   = [
+      'Januar','Februar','März','April','Mai','Juni',
+      'Juli','August','September','Oktober','November','Dezember'
+    ];
+
+    // ── App State ──────────────────────
+    let calData   = { users: {}, days: {} };
+    let fileSha   = null;
+    let currentUser  = null;  // { name, color }
+    let selectedColor = null;
+    let isSaving  = false;
+    let pendingSave = false;
+
+    const now = new Date();
+    let viewYear  = now.getFullYear();
+    let viewMonth = now.getMonth();
+
+    // ── GitHub API ─────────────────────
+    const API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
+
+    async function fetchData() {
+      showLoading(true);
+      try {
+        const res = await fetch(API_URL, {
+          headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (res.status === 404) {
+          calData = { users: {}, days: {} };
+          fileSha = null;
+        } else if (res.ok) {
+          const json = await res.json();
+          fileSha = json.sha;
+          const decoded = decodeURIComponent(escape(atob(json.content.replace(/\n/g, ''))));
+          calData = JSON.parse(decoded);
+        } else {
+          showToast('⚠ Laden fehlgeschlagen');
+        }
+      } catch (e) {
+        showToast('⚠ Netzwerkfehler beim Laden');
+      }
+      showLoading(false);
+      renderCalendar();
+      renderLegend();
+    }
+
+    async function saveData() {
+      // Merge current user's color into shared data
+      if (currentUser) {
+        if (!calData.users) calData.users = {};
+        calData.users[currentUser.name] = { color: currentUser.color };
+      }
+
+      const contentStr  = JSON.stringify(calData, null, 2);
+      const encoded     = btoa(unescape(encodeURIComponent(contentStr)));
+
+      if (isSaving) { pendingSave = true; return; }
+      isSaving = true;
+
+      showLoading(true);
+      try {
+        const body = {
+          message: 'Homeoffice update',
+          content: encoded,
+          ...(fileSha ? { sha: fileSha } : {})
+        };
+        const res = await fetch(API_URL, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Content-Type':  'application/json',
+            'Accept':        'application/vnd.github.v3+json'
+          },
+          body: JSON.stringify(body)
+        });
+        if (res.ok) {
+          const json = await res.json();
+          fileSha = json.content.sha;
+          showToast('✓ Gespeichert');
+        } else {
+          showToast('⚠ Speichern fehlgeschlagen');
+        }
+      } catch (e) {
+        showToast('⚠ Netzwerkfehler');
+      }
+      showLoading(false);
+      isSaving = false;
+
+      if (pendingSave) {
+        pendingSave = false;
+        await saveData();
+      }
+    }
+
+    // ── Calendar Render ────────────────
+    function renderCalendar() {
+      document.getElementById('monthTitle').textContent =
+        `${MONTHS_LABEL[viewMonth]} ${viewYear}`;
+
+      // Weekday header
+      const wdEl = document.getElementById('weekdays');
+      wdEl.innerHTML = WEEKDAYS_LABEL.map((d, i) =>
+        `<div class="weekday${i >= 5 ? ' weekend' : ''}">${d}</div>`
+      ).join('');
+
+      const grid = document.getElementById('daysGrid');
+      grid.innerHTML = '';
+
+      const firstDay    = new Date(viewYear, viewMonth, 1);
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const startOffset = (firstDay.getDay() + 6) % 7; // Monday-based
+
+      // Empty leading cells
+      for (let i = 0; i < startOffset; i++) {
+        const el = document.createElement('div');
+        el.className = 'day empty';
+        grid.appendChild(el);
+      }
+
+      // Day cells
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = toDateStr(viewYear, viewMonth + 1, d);
+        grid.appendChild(buildDayCell(d, dateStr));
+      }
+    }
+
+    function buildDayCell(d, dateStr) {
+      const el  = document.createElement('div');
+      el.className = 'day';
+      el.dataset.date = dateStr;
+
+      // Weekend?
+      const dow = new Date(dateStr + 'T12:00:00').getDay();
+      if (dow === 0 || dow === 6) el.classList.add('weekend');
+
+      // Today?
+      if (
+        d === now.getDate() &&
+        viewMonth === now.getMonth() &&
+        viewYear  === now.getFullYear()
+      ) el.classList.add('today');
+
+      // Apply HO styling
+      const who = (calData.days && calData.days[dateStr]) || [];
+      applyDayStyle(el, who);
+
+      // Number
+      const numEl = document.createElement('div');
+      numEl.className = 'day-num';
+      numEl.textContent = d;
+      el.appendChild(numEl);
+
+      // Dots
+      refreshDots(el, who);
+
+      // Click
+      el.addEventListener('click', () => handleDayClick(dateStr, el));
+      return el;
+    }
+
+    function applyDayStyle(el, who) {
+      el.classList.remove('ho-single', 'ho-both');
+      el.style.removeProperty('--ho-color');
+      el.style.removeProperty('--color-a');
+      el.style.removeProperty('--color-b');
+
+      if (who.length === 0) return;
+
+      if (who.length === 1) {
+        el.classList.add('ho-single');
+        el.style.setProperty('--ho-color', getUserColor(who[0]));
+      } else {
+        el.classList.add('ho-both');
+        el.style.setProperty('--color-a', getUserColor(who[0]));
+        el.style.setProperty('--color-b', getUserColor(who[1]));
+      }
+    }
+
+    function refreshDots(el, who) {
+      let dotsEl = el.querySelector('.day-dots');
+      if (who.length === 0) {
+        if (dotsEl) dotsEl.remove();
+        return;
+      }
+      if (!dotsEl) {
+        dotsEl = document.createElement('div');
+        dotsEl.className = 'day-dots';
+        el.appendChild(dotsEl);
+      }
+      dotsEl.innerHTML = '';
+      who.forEach(name => {
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        dot.style.background = getUserColor(name);
+        dotsEl.appendChild(dot);
+      });
+    }
+
+    function getUserColor(name) {
+      if (currentUser && name === currentUser.name) return currentUser.color;
+      if (calData.users && calData.users[name]) return calData.users[name].color;
+      return '#AAAAAA';
+    }
+
+    // ── Day Click ─────────────────────
+    async function handleDayClick(dateStr, el) {
+      if (!currentUser) return;
+
+      if (!calData.days) calData.days = {};
+      if (!calData.days[dateStr]) calData.days[dateStr] = [];
+
+      const arr = calData.days[dateStr];
+      const idx = arr.indexOf(currentUser.name);
+
+      if (idx === -1) {
+        arr.push(currentUser.name);
+      } else {
+        arr.splice(idx, 1);
+        if (arr.length === 0) delete calData.days[dateStr];
+      }
+
+      const who = (calData.days && calData.days[dateStr]) || [];
+      applyDayStyle(el, who);
+      refreshDots(el, who);
+      renderLegend();
+      await saveData();
+    }
+
+    // ── Legend ─────────────────────────
+    function renderLegend() {
+      const leg = document.getElementById('legend');
+      leg.innerHTML = '';
+
+      // Merge: shared users + current device user
+      const combined = Object.assign({}, calData.users || {});
+      if (currentUser) combined[currentUser.name] = { color: currentUser.color };
+
+      Object.entries(combined).forEach(([name, info]) => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+          <div class="legend-swatch" style="background:${info.color}"></div>
+          <span>${name}</span>
+        `;
+        leg.appendChild(item);
+      });
+    }
+
+    // ── Helpers ────────────────────────
+    function toDateStr(y, m, d) {
+      return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    }
+
+    function showLoading(on) {
+      document.getElementById('loadingBar').classList.toggle('hidden', !on);
+    }
+
+    let toastTimer;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    function updateUserBadge() {
+      if (!currentUser) return;
+      document.getElementById('userDot').style.background = currentUser.color;
+      document.getElementById('userName').textContent = currentUser.name;
+    }
+
+    // ── Local Storage ──────────────────
+    function loadUser() {
+      const name  = localStorage.getItem('ho_name');
+      const color = localStorage.getItem('ho_color');
+      if (name && color) { currentUser = { name, color }; return true; }
+      return false;
+    }
+    function persistUser(name, color) {
+      localStorage.setItem('ho_name',  name);
+      localStorage.setItem('ho_color', color);
+      currentUser = { name, color };
+    }
+
+    // ── Setup Modal ────────────────────
+    function initColorGrid() {
+      const grid = document.getElementById('colorGrid');
+      COLORS.forEach(c => {
+        const sw = document.createElement('div');
+        sw.className = 'color-swatch';
+        sw.style.background = c;
+        sw.dataset.color = c;
+        sw.tabIndex = 0;
+        sw.addEventListener('click', () => {
+          document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+          sw.classList.add('selected');
+          selectedColor = c;
+          checkSetupReady();
+        });
+        grid.appendChild(sw);
+      });
+    }
+
+    function checkSetupReady() {
+      const name = document.getElementById('nameInput').value.trim();
+      document.getElementById('saveSetup').disabled = !(name.length > 0 && selectedColor);
+    }
+
+    document.getElementById('nameInput').addEventListener('input', checkSetupReady);
+
+    document.getElementById('saveSetup').addEventListener('click', () => {
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name || !selectedColor) return;
+      persistUser(name, selectedColor);
+      updateUserBadge();
+      document.getElementById('setupModal').classList.add('hidden');
+      fetchData();
+    });
+
+    // Re-open setup from badge
+    document.getElementById('userBadge').addEventListener('click', () => {
+      document.getElementById('nameInput').value = currentUser?.name || '';
+      selectedColor = currentUser?.color || null;
+      document.querySelectorAll('.color-swatch').forEach(s => {
+        s.classList.toggle('selected', s.dataset.color === selectedColor);
+      });
+      checkSetupReady();
+      document.getElementById('setupModal').classList.remove('hidden');
+    });
+
+    // ── Month Navigation ───────────────
+    document.getElementById('prevMonth').addEventListener('click', () => {
+      if (viewMonth === 0) { viewMonth = 11; viewYear--; }
+      else viewMonth--;
+      renderCalendar();
+    });
+    document.getElementById('nextMonth').addEventListener('click', () => {
+      if (viewMonth === 11) { viewMonth = 0; viewYear++; }
+      else viewMonth++;
+      renderCalendar();
+    });
+
+    // ── Boot ───────────────────────────
+    initColorGrid();
+
+    if (loadUser()) {
+      updateUserBadge();
+      fetchData();
+    } else {
+      renderCalendar();
+      document.getElementById('setupModal').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
