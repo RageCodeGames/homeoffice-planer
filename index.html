@@ -130,7 +130,7 @@
     /* Unified calendar grid (header + days in one grid) */
     .cal-grid {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(5, 1fr);
     }
     .weekday {
       background: var(--surface2);
@@ -145,7 +145,7 @@
       border-bottom: 1px solid var(--border);
     }
     .weekday:last-child { border-right: none; }
-    .weekday.weekend { color: #C4B9AC; }
+
 
     /* ── Day Cell ── */
     .day {
@@ -163,7 +163,7 @@
       border-right: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
     }
-    .day:nth-child(7n) { border-right: none; }
+    .day:nth-child(5n) { border-right: none; }
     .day:hover { background: var(--surface2); }
 
     .day.empty {
@@ -180,7 +180,7 @@
       z-index: 1;
       line-height: 1;
     }
-    .day.weekend .day-num { color: var(--text-muted); }
+
 
     /* Today ring */
     .day.today .day-num {
@@ -474,7 +474,7 @@
       '#6DB56D', '#9B7FD4'
     ];
 
-    const WEEKDAYS_LABEL = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    const WEEKDAYS_LABEL = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
     const MONTHS_LABEL   = [
       'Januar','Februar','März','April','Mai','Juni',
       'Juli','August','September','Oktober','November','Dezember'
@@ -583,25 +583,27 @@
       // Weekday header row
       WEEKDAYS_LABEL.forEach((d, i) => {
         const wd = document.createElement('div');
-        wd.className = 'weekday' + (i >= 5 ? ' weekend' : '');
+        wd.className = 'weekday';
         wd.textContent = d;
         grid.appendChild(wd);
       });
 
       const firstDay    = new Date(viewYear, viewMonth, 1);
       const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-      const startOffset = (firstDay.getDay() + 6) % 7; // Monday-based
-
-      // Empty leading cells
-      for (let i = 0; i < startOffset; i++) {
+      // Empty leading cells (Mo=0 .. Fr=4, skip Sa/So)
+      const startDow = (firstDay.getDay() + 6) % 7; // 0=Mo..6=So
+      const leadingEmpties = Math.min(startDow, 5);
+      for (let i = 0; i < leadingEmpties; i++) {
         const el = document.createElement('div');
         el.className = 'day empty';
         grid.appendChild(el);
       }
 
-      // Day cells
+      // Day cells — skip Saturday (dow=6) and Sunday (dow=0)
       for (let d = 1; d <= daysInMonth; d++) {
         const dateStr = toDateStr(viewYear, viewMonth + 1, d);
+        const dow = new Date(dateStr + 'T12:00:00').getDay(); // 0=So,6=Sa
+        if (dow === 0 || dow === 6) continue;
         grid.appendChild(buildDayCell(d, dateStr));
       }
     }
@@ -610,10 +612,6 @@
       const el  = document.createElement('div');
       el.className = 'day';
       el.dataset.date = dateStr;
-
-      // Weekend?
-      const dow = new Date(dateStr + 'T12:00:00').getDay();
-      if (dow === 0 || dow === 6) el.classList.add('weekend');
 
       // Today?
       if (
