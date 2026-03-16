@@ -131,8 +131,6 @@
     .cal-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      background: var(--border);
-      gap: 1px;
     }
     .weekday {
       background: var(--surface2);
@@ -143,7 +141,10 @@
       letter-spacing: 0.09em;
       text-transform: uppercase;
       color: var(--text-muted);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
     }
+    .weekday:last-child { border-right: none; }
     .weekday.weekend { color: #C4B9AC; }
 
     /* ── Day Cell ── */
@@ -159,7 +160,10 @@
       position: relative;
       transition: background 0.12s;
       -webkit-tap-highlight-color: transparent;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
     }
+    .day:nth-child(7n) { border-right: none; }
     .day:hover { background: var(--surface2); }
 
     .day.empty {
