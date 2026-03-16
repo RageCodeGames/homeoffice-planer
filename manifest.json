@@ -1,0 +1,18 @@
+{
+  "name": "Homeoffice Planer",
+  "short_name": "HO Planer",
+  "description": "Wer arbeitet wann im Homeoffice?",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#EDE8DF",
+  "theme_color": "#251E14",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

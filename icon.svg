@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="110" fill="#251E14"/>
+  <!-- House shape -->
+  <polygon points="256,90 420,230 420,430 92,430 92,230" fill="#EDE8DF"/>
+  <!-- Door -->
+  <rect x="210" y="310" width="92" height="120" rx="8" fill="#251E14"/>
+  <!-- Roof accent -->
+  <polygon points="256,70 440,240 430,250 256,95 82,250 72,240" fill="#C17D3C"/>
+  <!-- Window left -->
+  <rect x="130" y="270" width="70" height="60" rx="6" fill="#C17D3C" opacity="0.85"/>
+  <!-- Window right -->
+  <rect x="312" y="270" width="70" height="60" rx="6" fill="#5B8DEF" opacity="0.85"/>
+</svg>
