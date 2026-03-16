@@ -127,14 +127,15 @@
       overflow: hidden;
     }
 
-    /* Weekday header */
-    .weekdays {
+    /* Unified calendar grid (header + days in one grid) */
+    .cal-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      background: var(--surface2);
-      border-bottom: 1px solid var(--border);
+      background: var(--border);
+      gap: 1px;
     }
     .weekday {
+      background: var(--surface2);
       text-align: center;
       padding: 0.7rem 0;
       font-size: 0.72rem;
@@ -144,14 +145,6 @@
       color: var(--text-muted);
     }
     .weekday.weekend { color: #C4B9AC; }
-
-    /* Day grid */
-    .days-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 1px;
-      background: var(--border);
-    }
 
     /* ── Day Cell ── */
     .day {
@@ -448,8 +441,7 @@
   </div>
 
   <div class="calendar-wrap">
-    <div class="weekdays" id="weekdays"></div>
-    <div class="days-grid" id="daysGrid"></div>
+    <div class="cal-grid" id="calGrid"></div>
   </div>
 
   <div class="loading-bar hidden" id="loadingBar">
@@ -581,14 +573,16 @@
       document.getElementById('monthTitle').textContent =
         `${MONTHS_LABEL[viewMonth]} ${viewYear}`;
 
-      // Weekday header
-      const wdEl = document.getElementById('weekdays');
-      wdEl.innerHTML = WEEKDAYS_LABEL.map((d, i) =>
-        `<div class="weekday${i >= 5 ? ' weekend' : ''}">${d}</div>`
-      ).join('');
-
-      const grid = document.getElementById('daysGrid');
+      const grid = document.getElementById('calGrid');
       grid.innerHTML = '';
+
+      // Weekday header row
+      WEEKDAYS_LABEL.forEach((d, i) => {
+        const wd = document.createElement('div');
+        wd.className = 'weekday' + (i >= 5 ? ' weekend' : '');
+        wd.textContent = d;
+        grid.appendChild(wd);
+      });
 
       const firstDay    = new Date(viewYear, viewMonth, 1);
       const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
