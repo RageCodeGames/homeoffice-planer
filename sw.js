@@ -1,4 +1,4 @@
-const CACHE = 'ho-planer-v1';
+const CACHE = 'ho-planer-v2';
 const ASSETS = [
   './',
   './index.html',
